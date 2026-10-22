@@ -1,0 +1,11 @@
+# Linux 外部GPU训练环境；先按显卡与CUDA安装匹配的PyTorch，再安装本文件。
+# vLLM另建独立推理环境，避免其严格torch依赖影响训练环境。
+transformers>=4.57.3,<5.0
+peft>=0.17,<1.0
+accelerate>=1.2,<2.0
+datasets>=3.0,<4.0
+safetensors>=0.4
+jsonschema>=4.23,<5.0
+pydantic>=2.9,<3.0
+pydantic-settings>=2.6,<3.0
+httpx>=0.27,<0.29

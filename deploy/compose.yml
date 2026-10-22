@@ -1,0 +1,120 @@
+# 中间件编排：固定镜像标签，禁止 latest。
+# 只绑定本机地址，供单人本机演示使用。
+name: legal-rag
+
+services:
+  mongo:
+    image: mongo:7.0.14
+    container_name: legal-rag-mongo
+    command: ["--bind_ip_all"]
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    mem_limit: 1536m
+
+  # 说明：MinIO 开源仓库已归档、官方二进制返回 410 Gone 且镜像不可获取（2026-10 实测），
+  # 因此对象存储改用 S3 兼容的 SeaweedFS；应用仍通过标准 S3 客户端访问，可由 MinIO 或其他
+  # S3 服务替换。宿主端口保持 9000，Milvus 内部走容器网络 seaweedfs:8333。
+  seaweedfs:
+    image: chrislusf/seaweedfs:3.71
+    container_name: legal-rag-objectstore
+    command: >-
+      server -dir=/data -s3 -s3.port=8333 -master.port=9333
+      -volume.port=8080 -filer -filer.port=8888 -ip=seaweedfs
+      -s3.config=/etc/seaweedfs/s3.json
+    ports:
+      - "127.0.0.1:9000:8333"
+    volumes:
+      - object-data:/data
+      - ./seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9333/cluster/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    mem_limit: 512m
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.16
+    container_name: legal-rag-etcd
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+    command: >-
+      etcd -advertise-client-urls=http://127.0.0.1:2379
+      -listen-client-urls=http://0.0.0.0:2379 --data-dir /etcd
+    volumes:
+      - etcd-data:/etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    mem_limit: 512m
+
+  milvus:
+    image: milvusdb/milvus:v2.4.15
+    container_name: legal-rag-milvus
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: seaweedfs:8333
+      MINIO_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY:-legalrag}
+      MINIO_SECRET_ACCESS_KEY: ${MINIO_SECRET_KEY:-legalrag-secret}
+      MINIO_BUCKET_NAME: milvus-storage
+    ports:
+      - "127.0.0.1:19530:19530"
+      - "127.0.0.1:9091:9091"
+    volumes:
+      - milvus-data:/var/lib/milvus
+    depends_on:
+      etcd:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+    mem_limit: 2560m
+
+  neo4j:
+    image: neo4j:5.26.0-community
+    container_name: legal-rag-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-legalrag-neo4j}
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 1G
+      NEO4J_server_memory_pagecache_size: 256m
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+    ports:
+      - "127.0.0.1:7687:7687"
+      - "127.0.0.1:7474:7474"
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+    mem_limit: 2048m
+
+volumes:
+  mongo-data:
+  object-data:
+  etcd-data:
+  milvus-data:
+  neo4j-data:
+  neo4j-logs:

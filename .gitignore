@@ -1,0 +1,38 @@
+# 密钥与本地配置
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# 本地数据库/二进制（容器化后不再需要）
+deploy/db/
+deploy/bin/
+
+# 数据与产物：原件、模型、实验、日志不入库
+data/raw/
+data/objects/
+artifacts/
+*.log
+logs/
+models/
+merged_model/
+
+# 系统
+.DS_Store
+Thumbs.db
+
+.workbuddy/
+deploy/model-qwen3/
+data/
+*.zip
+*.safetensors
+*.bin

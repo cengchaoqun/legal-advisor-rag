@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>掌柜 · 法律智库｜劳动用工咨询</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">掌</span>
+      <div>
+        <strong>掌柜 · 法律智库</strong>
+        <small>法律咨询与知识工作台</small>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="#/chat" data-nav="chat">法律咨询</a>
+      <a href="#/documents" data-nav="documents">法律资料</a>
+      <a href="#/graph" data-nav="graph">知识关联</a>
+    </nav>
+    <div class="topbar-right">
+      <span id="mode-badge" class="badge badge-muted" title="运行模式与依赖状态">检查中…</span>
+      <button id="new-session" class="btn btn-primary">＋ 新建咨询</button>
+    </div>
+  </header>
+
+  <div id="banner" class="banner hidden"></div>
+
+  <main id="view" class="view"></main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <template id="tpl-chat">
+    <div class="chat-layout">
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <h3>最近咨询</h3>
+          <button id="refresh-sessions" class="btn btn-ghost btn-sm" title="刷新">刷新</button>
+        </div>
+        <ul id="session-list" class="session-list"></ul>
+        <div class="sidebar-foot">
+          <span>示例工作空间</span>
+          <small>单人本机演示 · 无登录</small>
+        </div>
+      </aside>
+      <section class="chat-main">
+        <div id="chat-hero" class="hero">
+          <p class="eyebrow">统一工作台</p>
+          <h1>让每一次法律分析，都有据可查</h1>
+          <p class="muted">描述法律问题，结合资料、条款与关联案例梳理思路。首期覆盖工资拖欠、劳动合同解除与经济补偿。</p>
+          <div class="scene-cards">
+            <button class="scene-card" data-scene="wage_arrears"><strong>工资拖欠</strong><span>核实支付记录与欠薪事实</span></button>
+            <button class="scene-card" data-scene="termination"><strong>劳动合同解除</strong><span>区分解除事实、条件与关联案例</span></button>
+            <button class="scene-card" data-scene="economic_compensation"><strong>经济补偿</strong><span>结合事实、版本与条款查看依据</span></button>
+          </div>
+        </div>
+        <div id="chat-thread" class="thread"></div>
+        <form id="composer" class="composer">
+          <textarea id="question" rows="3" maxlength="2000" placeholder="输入法律问题、争议焦点或案情描述…（Enter 发送，Shift+Enter 换行）"></textarea>
+          <div class="composer-row">
+            <label class="chip"><input type="checkbox" id="web-enabled" /> 联网补充（默认关闭）</label>
+            <label class="chip">相关日期 <input type="date" id="relevant-date" /></label>
+            <label class="file-chip">添加咨询附件<input type="file" id="attachment" accept=".pdf,.md" hidden /></label>
+            <span id="attachment-hint" class="muted small"></span>
+            <button type="submit" class="btn btn-primary" id="send">开始咨询 →</button>
+          </div>
+          <p class="muted small">咨询附件仅用于当前会话；共享资料请前往「法律资料」导入。</p>
+        </form>
+      </section>
+      <aside id="evidence-panel" class="evidence-panel">
+        <div class="panel-head">
+          <h3>相关依据</h3>
+          <p class="muted small">来源可回溯 · 适用条件需核验</p>
+        </div>
+        <div id="evidence-list" class="evidence-list">
+          <p class="muted small">提交问题后，本轮编号证据会显示在这里。</p>
+        </div>
+        <div id="evidence-detail" class="evidence-detail hidden"></div>
+      </aside>
+    </div>
+  </template>
+
+  <template id="tpl-documents">
+    <div class="page">
+      <div class="page-head">
+        <div>
+          <h1>法律资料</h1>
+          <p class="muted">自动解析、自动发布；可用性按当前发布版本判定，最近任务单独显示。</p>
+        </div>
+        <button id="open-upload" class="btn btn-primary">导入资料</button>
+      </div>
+      <div class="toolbar">
+        <input id="doc-q" type="search" placeholder="搜索标题、文号或案号" />
+        <select id="doc-type">
+          <option value="">全部类型</option>
+          <option value="law">法律法规</option>
+          <option value="interpretation">司法解释</option>
+          <option value="case">案例</option>
+          <option value="guidance">官方指引</option>
+          <option value="unknown">未识别</option>
+        </select>
+        <select id="doc-availability">
+          <option value="">全部可用性</option>
+          <option value="available">可用</option>
+          <option value="limited">受限可用</option>
+          <option value="unavailable">不可用</option>
+        </select>
+        <button id="refresh-docs" class="btn btn-ghost">刷新</button>
+        <span id="doc-summary" class="muted small"></span>
+      </div>
+      <div id="doc-list" class="doc-list"></div>
+      <div class="pager"><button id="doc-more" class="btn btn-ghost hidden">加载更多</button></div>
+    </div>
+    <div id="drawer" class="drawer hidden">
+      <div class="drawer-panel">
+        <div class="drawer-head">
+          <h3 id="drawer-title">导入资料</h3>
+          <button id="close-drawer" class="btn btn-ghost btn-sm">关闭</button>
+        </div>
+        <div class="drawer-body">
+          <form id="upload-form" class="upload-form">
+            <label>文件（PDF / Markdown，≤20 MiB）
+              <input type="file" id="upload-file" accept=".pdf,.md" required />
+            </label>
+            <label>标题（缺省用文件名）<input type="text" id="upload-title" maxlength="200" /></label>
+            <label>类型
+              <select id="upload-doc-type">
+                <option value="unknown">未识别</option>
+                <option value="law">法律法规</option>
+                <option value="interpretation">司法解释</option>
+                <option value="case">案例</option>
+                <option value="guidance">官方指引</option>
+              </select>
+            </label>
+            <label>来源 URL（可选）<input type="url" id="upload-source" placeholder="https://…" /></label>
+            <button type="submit" class="btn btn-primary">提交导入</button>
+          </form>
+          <div id="task-panel" class="task-panel hidden">
+            <h4>导入任务</h4>
+            <dl id="task-detail"></dl>
+            <div id="task-actions"></div>
+            <p class="muted small">抽屉关闭后任务继续；刷新页面可凭任务 ID 恢复。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-graph">
+    <div class="page graph-page">
+      <div class="page-head">
+        <div>
+          <h1>知识关联</h1>
+          <p class="muted">关系必须有原文支持；未解析引用只作为线索，不连成确定条款边。</p>
+        </div>
+      </div>
+      <div class="graph-layout">
+        <aside class="graph-side">
+          <input id="entity-q" type="search" placeholder="搜索实体名称，如：劳动合同法" />
+          <ul id="entity-list" class="entity-list"></ul>
+          <button id="entity-more" class="btn btn-ghost btn-sm hidden">加载更多</button>
+        </aside>
+        <section class="graph-main">
+          <div id="graph-empty" class="empty">
+            <h3>选择左侧实体查看关联</h3>
+            <p class="muted">先按中文名称检索实体，再查看有来源支持的关系路径与原文。</p>
+          </div>
+          <div id="graph-result" class="hidden">
+            <div id="graph-paths" class="path-list"></div>
+            <div id="graph-chunks" class="chunk-list"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </template>
+
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

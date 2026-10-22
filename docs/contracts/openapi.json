@@ -1,0 +1,1585 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "劳动用工咨询演示 API",
+    "version": "0.4.0",
+    "description": "设计契约，尚未实现。所有 JSON 错误遵循统一 Error。单人受控环境，无账号。"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000"
+    }
+  ],
+  "paths": {
+    "/health/live": {
+      "get": {
+        "operationId": "get__health_live",
+        "summary": "进程存活",
+        "responses": {
+          "200": {
+            "description": "进程存活成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "ok"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "get__health_ready",
+        "summary": "依赖与配置就绪",
+        "responses": {
+          "200": {
+            "description": "依赖与配置就绪成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ready",
+                        "degraded",
+                        "unready"
+                      ]
+                    },
+                    "checks": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "enum": [
+                          "ok",
+                          "unavailable",
+                          "not_configured"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "checks"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/documents": {
+      "get": {
+        "operationId": "get__api_documents",
+        "summary": "资料分页",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "doc_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "law",
+                "interpretation",
+                "case",
+                "guidance",
+                "unknown"
+              ]
+            }
+          },
+          {
+            "name": "availability",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "available",
+                "limited",
+                "unavailable"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "description": "标题或当前发布版本文号/案号的字面子串；去首尾空白、忽略拉丁大小写，空白串422，不解释为正则；先过滤再分页"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "资料分页成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "./核心对象.schema.json#/$defs/DocumentListItem"
+                      }
+                    },
+                    "next_cursor": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "后续游标"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "next_cursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "description": "一次返回资料、当前发布版本、派生 availability 和最近导入任务，无须逐条获取详情。availability 仅筛当前版本；无当前版本视为 unavailable；新版本失败不降低旧发布版本可用性。先过滤再分页。"
+      },
+      "post": {
+        "operationId": "post__api_documents",
+        "summary": "提交知识资料",
+        "responses": {
+          "202": {
+            "description": "提交知识资料成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "document_id": {
+                      "type": "string",
+                      "description": "业务 UUID",
+                      "format": "uuid"
+                    },
+                    "version_id": {
+                      "type": "string",
+                      "description": "版本"
+                    },
+                    "task_id": {
+                      "type": "string",
+                      "description": "业务 UUID",
+                      "format": "uuid"
+                    },
+                    "duplicate": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "document_id",
+                    "version_id",
+                    "task_id",
+                    "duplicate"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimitExceeded"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "标题",
+                    "maxLength": 200
+                  },
+                  "doc_type": {
+                    "type": "string",
+                    "enum": [
+                      "law",
+                      "interpretation",
+                      "case",
+                      "guidance",
+                      "unknown"
+                    ]
+                  },
+                  "source_url": {
+                    "type": "string",
+                    "description": "来源 URL",
+                    "format": "uri"
+                  },
+                  "request_id": {
+                    "type": "string",
+                    "description": "业务 UUID",
+                    "format": "uuid"
+                  },
+                  "replace_document_id": {
+                    "type": "string",
+                    "description": "业务 UUID",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "file",
+                  "request_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/documents/{document_id}": {
+      "get": {
+        "operationId": "get__api_documents_document_id",
+        "summary": "资料与当前版本",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "资料与当前版本成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./核心对象.schema.json#/$defs/DocumentListItem"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete__api_documents_document_id",
+        "summary": "撤销知识资料",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "撤销知识资料成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "document_id": {
+                      "type": "string",
+                      "description": "业务 UUID",
+                      "format": "uuid"
+                    },
+                    "tombstoned": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "document_id",
+                    "tombstoned"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/documents/{document_id}/versions": {
+      "get": {
+        "operationId": "get__api_documents_document_id_versions",
+        "summary": "历史版本",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "历史版本成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "./核心对象.schema.json#/$defs/Version"
+                      }
+                    },
+                    "next_cursor": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "后续游标"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "next_cursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/import-tasks/{task_id}": {
+      "get": {
+        "operationId": "get__api_import_tasks_task_id",
+        "summary": "导入任务状态",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "导入任务状态成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./核心对象.schema.json#/$defs/TaskStatus"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/import-tasks/{task_id}/retry": {
+      "post": {
+        "operationId": "post__api_import_tasks_task_id_retry",
+        "summary": "重试允许恢复的导入阶段",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "request_id": {
+                    "type": "string",
+                    "description": "业务 UUID",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "request_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "重试允许恢复的导入阶段成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "task_id": {
+                      "type": "string",
+                      "description": "业务 UUID",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "const": "queued"
+                    }
+                  },
+                  "required": [
+                    "task_id",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimitExceeded"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/sessions": {
+      "get": {
+        "operationId": "get__api_sessions",
+        "summary": "会话列表",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "会话列表成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "./核心对象.schema.json#/$defs/Session"
+                      }
+                    },
+                    "next_cursor": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "后续游标"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "next_cursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post__api_sessions",
+        "summary": "创建会话",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "标题",
+                    "maxLength": 80
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建会话成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./核心对象.schema.json#/$defs/Session"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/sessions/{session_id}": {
+      "delete": {
+        "operationId": "delete__api_sessions_session_id",
+        "summary": "软删除会话及其私有附件",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "软删除会话及其私有附件成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session_id": {
+                      "type": "string",
+                      "description": "业务 UUID",
+                      "format": "uuid"
+                    },
+                    "deleted": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "session_id",
+                    "deleted"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/sessions/{session_id}/messages": {
+      "get": {
+        "operationId": "get__api_sessions_session_id_messages",
+        "summary": "会话历史",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "会话历史成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "./核心对象.schema.json#/$defs/Message"
+                      }
+                    },
+                    "next_cursor": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "后续游标"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "next_cursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/sessions/{session_id}/attachments": {
+      "post": {
+        "operationId": "post__api_sessions_session_id_attachments",
+        "summary": "上传仅当前会话可用的附件",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "上传仅当前会话可用的附件成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "attachment_id": {
+                      "type": "string",
+                      "description": "业务 UUID",
+                      "format": "uuid"
+                    },
+                    "task_id": {
+                      "type": "string",
+                      "description": "业务 UUID",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "const": "queued"
+                    }
+                  },
+                  "required": [
+                    "attachment_id",
+                    "task_id",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimitExceeded"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "request_id": {
+                    "type": "string",
+                    "description": "业务 UUID",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "file",
+                  "request_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/{session_id}/queries": {
+      "post": {
+        "operationId": "post__api_sessions_session_id_queries",
+        "summary": "提交咨询",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./核心对象.schema.json#/$defs/QueryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "提交咨询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "query_id": {
+                      "type": "string",
+                      "description": "业务 UUID",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "const": "queued"
+                    },
+                    "events_url": {
+                      "type": "string",
+                      "description": "SSE 地址"
+                    }
+                  },
+                  "required": [
+                    "query_id",
+                    "status",
+                    "events_url"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimitExceeded"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/queries/{query_id}": {
+      "get": {
+        "operationId": "get__api_queries_query_id",
+        "summary": "查询状态与答案快照",
+        "parameters": [
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "查询状态与答案快照成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./核心对象.schema.json#/$defs/QueryStatus"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/queries/{query_id}/cancel": {
+      "post": {
+        "operationId": "post__api_queries_query_id_cancel",
+        "summary": "请求取消咨询",
+        "parameters": [
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "request_id": {
+                    "type": "string",
+                    "description": "业务 UUID",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "request_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求取消咨询成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "query_id": {
+                      "type": "string",
+                      "description": "业务 UUID",
+                      "format": "uuid"
+                    },
+                    "cancel_requested": {
+                      "type": "boolean"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "当前状态"
+                    }
+                  },
+                  "required": [
+                    "query_id",
+                    "cancel_requested",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/queries/{query_id}/events": {
+      "get": {
+        "operationId": "get__api_queries_query_id_events",
+        "summary": "SSE 事件与重放",
+        "parameters": [
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Last-Event-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "after_seq",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "持久化事件流",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "410": {
+            "$ref": "#/components/responses/Gone"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "x-event-types": [
+          "started",
+          "stage",
+          "evidence",
+          "delta",
+          "warning",
+          "done",
+          "failed",
+          "cancelled"
+        ],
+        "description": "HTTP 错误仅在开始事件流前返回。200 建流后故障以持久化 failed/cancelled 事件报告；不在事件流中插入 JSON 错误响应。Last-Event-ID 必须属于当前 query，且与 after_seq 一致；超出 last_event_seq 返回 400。"
+      }
+    },
+    "/api/queries/{query_id}/evidence/{evidence_id}": {
+      "get": {
+        "operationId": "get__api_queries_query_id_evidence_evidence_id",
+        "summary": "本轮证据快照",
+        "parameters": [
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "evidence_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^E[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "本轮证据快照成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./核心对象.schema.json#/$defs/Evidence"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/versions/{version_id}/file": {
+      "get": {
+        "operationId": "get__api_versions_version_id_file",
+        "summary": "受控读取资料原件",
+        "parameters": [
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "原件流，非公开对象桶",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "410": {
+            "$ref": "#/components/responses/Gone"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/graph/relations": {
+      "get": {
+        "operationId": "get__api_graph_relations",
+        "summary": "有界图关联",
+        "parameters": [
+          {
+            "name": "entity_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "max_hops",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2,
+              "default": 2
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "有界图关联成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "paths": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "./核心对象.schema.json#/$defs/Path"
+                      },
+                      "maxItems": 50
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "警告"
+                      }
+                    },
+                    "nodes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "./核心对象.schema.json#/$defs/GraphEntity"
+                      },
+                      "maxItems": 150
+                    },
+                    "support_chunks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "./核心对象.schema.json#/$defs/Chunk"
+                      },
+                      "maxItems": 100
+                    }
+                  },
+                  "required": [
+                    "paths",
+                    "warnings",
+                    "nodes",
+                    "support_chunks"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "description": "只浏览已发布且未撤销的 knowledge 白名单。返回 paths、完整节点标签 nodes 和支持原文 support_chunks；支持切片总数最多100，按 path_id 顺序保留完整可定位路径，超限标 GRAPH_RESULT_TRUNCATED，禁止返回缺节点/缺证据的半条路径。empty 为200空数组；依赖失败为503。"
+      }
+    },
+    "/api/costs": {
+      "get": {
+        "operationId": "get__api_costs",
+        "summary": "成本台账摘要",
+        "responses": {
+          "200": {
+            "description": "成本台账摘要成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./核心对象.schema.json#/$defs/Cost"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/api/graph/entities": {
+      "get": {
+        "operationId": "get__api_graph_entities",
+        "summary": "按中文名称搜索可见知识实体",
+        "description": "q 为实体名称字面子串，去首尾空白、忽略拉丁字母大小写，禁止解释为正则/Cypher；不传则列可见实体。按 label,entity_id 升序，先过滤再分页；零命中200空列表。只返回有可见已发布知识版本支撑的实体。",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "可见知识实体分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "./核心对象.schema.json#/$defs/GraphEntity"
+                      }
+                    },
+                    "next_cursor": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "description": "不透明后续游标"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "next_cursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "./核心对象.schema.json#/$defs/Error"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "输入语义或游标无效",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "资源不存在或范围不可见",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "幂等冲突或状态不允许",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "Gone": {
+        "description": "事件已过期或来源已撤销",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "上传文件超过大小限制",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "请求字段校验失败",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "LimitExceeded": {
+        "description": "预算或队列限额",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      },
+      "Unavailable": {
+        "description": "必要依赖、配置或服务不可用",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      }
+    }
+  }
+}

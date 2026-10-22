@@ -1,0 +1,207 @@
+{
+  "revision": "0.4",
+  "project": {
+    "mode": "single_user_demo",
+    "workspace": "default",
+    "jurisdiction": "CN-national",
+    "scenarios": [
+      "wage_arrears",
+      "termination",
+      "economic_compensation"
+    ],
+    "target_days": [
+      7,
+      14
+    ],
+    "human_review": false,
+    "web_default": false
+  },
+  "runtime": {
+    "host": "127.0.0.1",
+    "port": 8000,
+    "python": "3.11",
+    "query_concurrency": 1,
+    "import_concurrency": 1,
+    "embedding_concurrency": 1,
+    "lease_seconds": 60,
+    "heartbeat_seconds": 20,
+    "queue_wait_seconds": 60
+  },
+  "ingestion": {
+    "formats": [
+      "pdf",
+      "md"
+    ],
+    "parser": "pypdf_text",
+    "mineru_optional": true,
+    "scan_without_ocr": "PARSER_UNSUPPORTED",
+    "max_file_mib": 20,
+    "max_pdf_pages": 200,
+    "max_documents": 100,
+    "max_chunks": 5000,
+    "chunk_target_min_chars": 400,
+    "chunk_target_max_chars": 800,
+    "chunk_soft_max_chars": 1000,
+    "chunk_overlap_chars": 80,
+    "max_attempts": 3,
+    "auto_publish": true,
+    "vector_required": true,
+    "graph_failure_availability": "limited",
+    "metadata_missing_availability": "limited"
+  },
+  "models": {
+    "generation": "legal-labor-sft-v1",
+    "rerank": "qwen3-rerank",
+    "judge": "qwen-flash",
+    "embedding": "BAAI/bge-m3",
+    "embedding_dimension": 1024,
+    "embedding_revision": null,
+    "require_revision_lock_before_index": true,
+    "embedding_batch_size": 4,
+    "online_temperature": 0.1,
+    "online_max_output_tokens": 512,
+    "aux_generation": "qwen-flash",
+    "generation_kind": "fine_tuned_openai_compatible",
+    "online_max_input_tokens": 1024
+  },
+  "retrieval": {
+    "ordinary_dense_k": 20,
+    "ordinary_sparse_k": 20,
+    "ordinary_weights": [
+      0.7,
+      0.3
+    ],
+    "ordinary_result_k": 20,
+    "hyde_max_chars": 300,
+    "hyde_result_k": 20,
+    "graph_max_hops": 2,
+    "graph_max_paths": 50,
+    "graph_result_k": 20,
+    "rrf_k": 60,
+    "rrf_rank_start": 1,
+    "local_weights": {
+      "ordinary": 1,
+      "hyde": 0.7,
+      "graph": 0.8
+    },
+    "web_max_results": 5,
+    "web_max_pages": 3,
+    "rerank_input_k": 30,
+    "final_evidence_k": 6,
+    "evidence_max_chars": 2400,
+    "cliff_min_keep": 2,
+    "cliff_abs_gap": 0.25,
+    "cliff_rel_gap": 0.35
+  },
+  "timeouts": {
+    "query_total_seconds": 120,
+    "ordinary_seconds": 10,
+    "graph_seconds": 10,
+    "hyde_seconds": 15,
+    "web_seconds": 15,
+    "rerank_seconds": 10,
+    "generation_seconds": 45,
+    "import_stage_seconds": 600,
+    "transient_retries": 1,
+    "retry_wait_seconds": 2
+  },
+  "session": {
+    "history_messages": 6,
+    "history_max_chars": 4000,
+    "max_question_chars": 2000,
+    "max_attachments": 2,
+    "sse_heartbeat_seconds": 15,
+    "event_retention_days": 7
+  },
+  "sources": {
+    "target_normative_documents": 6,
+    "target_case_documents": 18,
+    "cases_per_scenario": 6,
+    "source_domains": [
+      "npc.gov.cn",
+      "court.gov.cn",
+      "mohrss.gov.cn"
+    ],
+    "allow_subdomains": true,
+    "per_domain_concurrency": 1,
+    "min_request_interval_seconds": 2,
+    "batch_page_limit": 30
+  },
+  "dataset": {
+    "train_target": 300,
+    "validation_target": 60,
+    "test_target": 90,
+    "test_per_scenario": 30,
+    "min_test_per_ability": 10,
+    "label_type": "synthetic_silver",
+    "seed": 42,
+    "pilot_samples": 30,
+    "max_regenerations": 1,
+    "near_duplicate_trigram_jaccard": 0.8,
+    "split_before_generation": true,
+    "human_annotation": false
+  },
+  "training": {
+    "base_model": "Qwen/Qwen3-8B",
+    "base_revision": null,
+    "require_revision_lock": true,
+    "method": "sft_lora",
+    "target_modules": [
+      "q_proj",
+      "v_proj"
+    ],
+    "r": 8,
+    "alpha": 16,
+    "dropout": 0.05,
+    "max_seq_length": 1536,
+    "per_device_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "epochs": 2,
+    "learning_rate": 0.0001,
+    "warmup_ratio": 0.03,
+    "weight_decay": 0.01,
+    "max_grad_norm": 1,
+    "gradient_checkpointing": true,
+    "seed": 42,
+    "precision": "bf16",
+    "assistant_only_loss": true,
+    "smoke_samples": 20,
+    "smoke_steps": 10,
+    "minimum_candidate_vram_gib": 24,
+    "inference_do_sample": false,
+    "inference_max_new_tokens": 512,
+    "program_integration_required": true
+  },
+  "budget": {
+    "currency": "CNY",
+    "total_limit": 300,
+    "api_limit": 80,
+    "gpu_limit": 150,
+    "reserve_limit": 70,
+    "paid_execution_enabled": false,
+    "require_live_pricing": true,
+    "gpu_max_hours": 6,
+    "external_shutdown_required": true
+  },
+  "evaluation": {
+    "type": "automatic_silver",
+    "online_retrieval_model_fixed": true,
+    "base_and_adapter_same_model": true,
+    "human_legal_validation": false,
+    "require_raw_predictions": true,
+    "require_improvement": false
+  },
+  "serving": {
+    "outside_business_app": true,
+    "engine": "vllm",
+    "artifact_type": "merged_model",
+    "served_model_name": "legal-labor-sft-v1",
+    "max_model_len": 1536,
+    "answer_model_url_env": "LLM_BASE_URL",
+    "deployment_manifest_env": "MODEL_DEPLOYMENT_MANIFEST",
+    "automatic_cloud_fallback": false,
+    "frontend_management": false,
+    "api_contract": "openai_chat_completions",
+    "billing": "resource_time"
+  }
+}

@@ -1,0 +1,1699 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/legal-rag/core.schema.json",
+  "title": "劳动用工 RAG 核心契约 V0.4",
+  "$defs": {
+    "QualityFlag": {
+      "type": "string",
+      "enum": [
+        "metadata_missing",
+        "effectivity_unknown",
+        "citation_unresolved",
+        "graph_unavailable",
+        "source_access_limited",
+        "parser_partial",
+        "citation_validation_failed"
+      ]
+    },
+    "LegalMetadata": {
+      "type": "object",
+      "properties": {
+        "jurisdiction": {
+          "type": "string",
+          "enum": [
+            "CN-national",
+            "unknown"
+          ]
+        },
+        "issued_date": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "公布日期",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effective_from": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "生效日期",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effective_to": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "终止日期，不含该日",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effectivity": {
+          "type": "string",
+          "enum": [
+            "known_current",
+            "known_historical",
+            "unknown"
+          ]
+        },
+        "effectivity_source_chunk_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "效力字段的原文依据"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "case_number": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "案号"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issuer": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "发文机关"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "document_number": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "文号"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "jurisdiction",
+        "issued_date",
+        "effective_from",
+        "effective_to",
+        "effectivity",
+        "effectivity_source_chunk_id",
+        "case_number",
+        "issuer",
+        "document_number"
+      ],
+      "additionalProperties": false
+    },
+    "Location": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "heading": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "章节"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "article": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "条号"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "start_char": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_char": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "page",
+        "heading",
+        "article",
+        "start_char",
+        "end_char"
+      ],
+      "additionalProperties": false
+    },
+    "Document": {
+      "type": "object",
+      "properties": {
+        "document_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string",
+          "description": "资料标题",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "doc_type": {
+          "type": "string",
+          "enum": [
+            "law",
+            "interpretation",
+            "case",
+            "guidance",
+            "unknown"
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "knowledge",
+            "session"
+          ]
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "业务 UUID",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "current_version_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "当前默认资料版本"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tombstoned": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "description": "UTC ISO 8601 时间",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "UTC ISO 8601 时间",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "document_id",
+        "title",
+        "doc_type",
+        "scope",
+        "session_id",
+        "current_version_id",
+        "tombstoned",
+        "created_at",
+        "updated_at"
+      ],
+      "additionalProperties": false
+    },
+    "Version": {
+      "type": "object",
+      "properties": {
+        "version_id": {
+          "type": "string",
+          "description": "SHA256(document_id+内容摘要+处理器版本)"
+        },
+        "document_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "sha256": {
+          "type": "string",
+          "description": "文件 SHA256",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source_url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "来源网址",
+              "format": "uri"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "object_key": {
+          "type": "string",
+          "description": "由系统产生的私有对象键"
+        },
+        "metadata": {
+          "$ref": "#/$defs/LegalMetadata"
+        },
+        "publication_state": {
+          "type": "string",
+          "enum": [
+            "staged",
+            "published",
+            "withdrawn"
+          ]
+        },
+        "availability": {
+          "type": "string",
+          "enum": [
+            "available",
+            "limited",
+            "unavailable"
+          ]
+        },
+        "vector_state": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "ready",
+            "failed"
+          ]
+        },
+        "graph_state": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "ready",
+            "failed",
+            "empty"
+          ]
+        },
+        "quality_flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/QualityFlag"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "description": "UTC ISO 8601 时间",
+          "format": "date-time"
+        },
+        "pipeline_revision": {
+          "type": "string",
+          "minLength": 1,
+          "description": "解析器、切片、抽取、嵌入快照及配置的确定性处理指纹；不含运行时间或随机值"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "description": "首次发布提交时间；未发布为 null，图重试不改首次时间"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "version_id",
+        "document_id",
+        "sha256",
+        "source_url",
+        "object_key",
+        "metadata",
+        "publication_state",
+        "availability",
+        "vector_state",
+        "graph_state",
+        "quality_flags",
+        "created_at",
+        "pipeline_revision",
+        "published_at"
+      ],
+      "additionalProperties": false
+    },
+    "Chunk": {
+      "type": "object",
+      "properties": {
+        "chunk_id": {
+          "type": "string",
+          "description": "SHA256(version_id+顺序+正文摘要)"
+        },
+        "document_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "version_id": {
+          "type": "string",
+          "description": "版本标识"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "content": {
+          "type": "string",
+          "description": "权威正文",
+          "minLength": 1
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        },
+        "scenario_tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "wage_arrears",
+              "termination",
+              "economic_compensation",
+              "other"
+            ]
+          }
+        },
+        "embedding_revision": {
+          "type": "string",
+          "description": "模型标识与快照"
+        },
+        "quality_flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/QualityFlag"
+          }
+        }
+      },
+      "required": [
+        "chunk_id",
+        "document_id",
+        "version_id",
+        "ordinal",
+        "content",
+        "location",
+        "scenario_tags",
+        "embedding_revision",
+        "quality_flags"
+      ],
+      "additionalProperties": false
+    },
+    "Candidate": {
+      "type": "object",
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "description": "本地 chunk_id 或 web:URL+正文摘要"
+        },
+        "source_type": {
+          "type": "string",
+          "enum": [
+            "local",
+            "web",
+            "web_snippet",
+            "attachment"
+          ]
+        },
+        "chunk_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "切片标识"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "version_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "本地资料版本"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "title": {
+          "type": "string",
+          "description": "来源标题"
+        },
+        "text": {
+          "type": "string",
+          "description": "供精排与生成的正文"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "外部 URL",
+              "format": "uri"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Location"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recall_sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "ordinary",
+              "hyde",
+              "graph",
+              "web"
+            ]
+          }
+        },
+        "rank_score": {
+          "type": "number"
+        },
+        "rerank_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quality_flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/QualityFlag"
+          }
+        }
+      },
+      "required": [
+        "source_id",
+        "source_type",
+        "chunk_id",
+        "version_id",
+        "title",
+        "text",
+        "url",
+        "location",
+        "recall_sources",
+        "rank_score",
+        "rerank_score",
+        "quality_flags"
+      ],
+      "additionalProperties": false
+    },
+    "Evidence": {
+      "type": "object",
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "description": "本次 query 内编号",
+          "pattern": "^E[1-9][0-9]*$"
+        },
+        "query_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "source_id": {
+          "type": "string",
+          "description": "候选来源标识"
+        },
+        "source_type": {
+          "type": "string",
+          "enum": [
+            "local",
+            "web",
+            "web_snippet",
+            "attachment"
+          ]
+        },
+        "chunk_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "切片标识"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "version_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "版本标识"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "title": {
+          "type": "string",
+          "description": "来源标题"
+        },
+        "text": {
+          "type": "string",
+          "description": "冻结证据快照正文"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "来源 URL",
+              "format": "uri"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Location"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metadata": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LegalMetadata"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quality_flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/QualityFlag"
+          }
+        }
+      },
+      "required": [
+        "evidence_id",
+        "query_id",
+        "source_id",
+        "source_type",
+        "chunk_id",
+        "version_id",
+        "title",
+        "text",
+        "url",
+        "location",
+        "metadata",
+        "quality_flags"
+      ],
+      "additionalProperties": false
+    },
+    "Path": {
+      "type": "object",
+      "properties": {
+        "path_id": {
+          "type": "string",
+          "description": "路径稳定摘要"
+        },
+        "node_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "实体 ID"
+          },
+          "minItems": 2,
+          "maxItems": 3
+        },
+        "relation_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "HAS_VERSION",
+              "HAS_PROVISION",
+              "CITES",
+              "CONCERNS",
+              "ISSUED_BY",
+              "SUPERSEDES",
+              "SUPPORTED_BY"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 2
+        },
+        "support_chunk_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "依据切片"
+          },
+          "minItems": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "source_supported",
+            "unresolved"
+          ]
+        },
+        "version_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "版本白名单"
+          }
+        }
+      },
+      "required": [
+        "path_id",
+        "node_ids",
+        "relation_types",
+        "support_chunk_ids",
+        "status",
+        "version_ids"
+      ],
+      "additionalProperties": false
+    },
+    "QueryRequest": {
+      "type": "object",
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "question": {
+          "type": "string",
+          "description": "用户问题",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "document_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "业务 UUID",
+            "format": "uuid"
+          },
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "attachment_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "业务 UUID",
+            "format": "uuid"
+          },
+          "maxItems": 2,
+          "uniqueItems": true
+        },
+        "relevant_date": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "相关日期",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "location": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "事实发生地域",
+              "maxLength": 80
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "web_enabled": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "request_id",
+        "question"
+      ],
+      "additionalProperties": false
+    },
+    "QueryStatus": {
+      "type": "object",
+      "properties": {
+        "query_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "running",
+            "completed",
+            "completed_with_warnings",
+            "failed",
+            "interrupted",
+            "cancelled"
+          ]
+        },
+        "behavior": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "answer",
+                "clarify",
+                "insufficient"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "answer": {
+          "type": "string",
+          "description": "终态或当前累计文本"
+        },
+        "citation_validation": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "passed",
+            "failed",
+            "not_applicable"
+          ]
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "稳定警告码"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          }
+        },
+        "last_event_seq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "created_at": {
+          "type": "string",
+          "description": "UTC ISO 8601 时间",
+          "format": "date-time"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "UTC ISO 8601 时间",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generation_model_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "实际回答模型服务标识"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generation_artifact_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "部署产物摘要；无法核验时为 null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "facts": {
+          "$ref": "#/$defs/Facts"
+        },
+        "path_status": {
+          "$ref": "#/$defs/PathStatus"
+        },
+        "reasoning_code": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "EVIDENCE_SUFFICIENT",
+                "FACTS_MISSING",
+                "NO_RELEVANT_EVIDENCE",
+                "EVIDENCE_CONFLICT",
+                "APPLICABILITY_UNCERTAIN"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "query_id",
+        "session_id",
+        "status",
+        "behavior",
+        "answer",
+        "citation_validation",
+        "warnings",
+        "evidence",
+        "last_event_seq",
+        "created_at",
+        "finished_at",
+        "generation_model_id",
+        "generation_artifact_sha256",
+        "facts",
+        "path_status",
+        "reasoning_code"
+      ],
+      "additionalProperties": false
+    },
+    "TaskStatus": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "document_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "version_id": {
+          "type": "string",
+          "description": "资料版本"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "running",
+            "succeeded",
+            "succeeded_with_warnings",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "validate",
+            "save_original",
+            "parse",
+            "split",
+            "extract",
+            "write_vectors",
+            "write_graph",
+            "publish",
+            "done"
+          ]
+        },
+        "availability": {
+          "type": "string",
+          "enum": [
+            "available",
+            "limited",
+            "unavailable"
+          ]
+        },
+        "vector_state": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "ready",
+            "failed"
+          ]
+        },
+        "graph_state": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "ready",
+            "failed",
+            "empty"
+          ]
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "稳定警告码"
+          }
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "UTC ISO 8601 时间",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "task_id",
+        "document_id",
+        "version_id",
+        "status",
+        "stage",
+        "availability",
+        "vector_state",
+        "graph_state",
+        "warnings",
+        "retryable",
+        "attempt",
+        "error",
+        "updated_at"
+      ],
+      "additionalProperties": false
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "稳定机器错误码"
+        },
+        "message": {
+          "type": "string",
+          "description": "中文可读描述"
+        },
+        "request_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "request_id",
+        "retryable",
+        "details"
+      ],
+      "additionalProperties": false
+    },
+    "DatasetSample": {
+      "type": "object",
+      "properties": {
+        "sample_id": {
+          "type": "string",
+          "description": "样本标识"
+        },
+        "split": {
+          "type": "string",
+          "enum": [
+            "train",
+            "validation",
+            "test"
+          ]
+        },
+        "origin_group_id": {
+          "type": "string",
+          "description": "划分来源组"
+        },
+        "scenario": {
+          "type": "string",
+          "enum": [
+            "wage_arrears",
+            "termination",
+            "economic_compensation"
+          ]
+        },
+        "ability": {
+          "type": "string",
+          "enum": [
+            "terminology_format",
+            "faithfulness",
+            "integration",
+            "citation",
+            "abstention"
+          ]
+        },
+        "question": {
+          "type": "string",
+          "description": "输入问题"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SampleEvidence"
+          }
+        },
+        "expected_behavior": {
+          "type": "string",
+          "enum": [
+            "answer",
+            "clarify",
+            "insufficient"
+          ]
+        },
+        "target_answer": {
+          "type": "string",
+          "description": "银标答案"
+        },
+        "label_type": {
+          "type": "string",
+          "enum": [
+            "synthetic_silver"
+          ]
+        },
+        "generator_revision": {
+          "type": "string",
+          "description": "生成模型+提示词版本"
+        },
+        "source_manifest_revision": {
+          "type": "string",
+          "description": "原始资料清单版本"
+        }
+      },
+      "required": [
+        "sample_id",
+        "split",
+        "origin_group_id",
+        "scenario",
+        "ability",
+        "question",
+        "evidence",
+        "expected_behavior",
+        "target_answer",
+        "label_type",
+        "generator_revision",
+        "source_manifest_revision"
+      ],
+      "additionalProperties": false
+    },
+    "Session": {
+      "type": "object",
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string",
+          "description": "会话标题"
+        },
+        "created_at": {
+          "type": "string",
+          "description": "UTC ISO 8601 时间",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "UTC ISO 8601 时间",
+          "format": "date-time"
+        },
+        "deleted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "session_id",
+        "title",
+        "created_at",
+        "updated_at",
+        "deleted"
+      ],
+      "additionalProperties": false
+    },
+    "Cost": {
+      "type": "object",
+      "properties": {
+        "total_limit_yuan": {
+          "const": 300
+        },
+        "settled_yuan": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reserved_yuan": {
+          "type": "number",
+          "minimum": 0
+        },
+        "estimated_unsettled_yuan": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pricing_revision": {
+          "type": "string",
+          "description": "价格配置版本"
+        },
+        "last_reconciled_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "UTC ISO 8601 时间",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "total_limit_yuan",
+        "settled_yuan",
+        "reserved_yuan",
+        "estimated_unsettled_yuan",
+        "pricing_revision",
+        "last_reconciled_at"
+      ],
+      "additionalProperties": false
+    },
+    "EvaluationLabel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_id",
+        "relevant_source_ids",
+        "required_points",
+        "expected_behavior",
+        "label_type"
+      ],
+      "properties": {
+        "sample_id": {
+          "type": "string"
+        },
+        "relevant_source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_points": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expected_behavior": {
+          "type": "string",
+          "enum": [
+            "answer",
+            "clarify",
+            "insufficient"
+          ]
+        },
+        "label_type": {
+          "const": "synthetic_silver"
+        }
+      }
+    },
+    "SampleEvidence": {
+      "type": "object",
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "description": "当前 sample_id 内编号；以 sample_id,evidence_id 复合定位，不调用在线证据接口",
+          "pattern": "^E[1-9][0-9]*$"
+        },
+        "source_id": {
+          "type": "string",
+          "description": "候选来源标识"
+        },
+        "source_type": {
+          "type": "string",
+          "enum": [
+            "local",
+            "web",
+            "web_snippet",
+            "attachment"
+          ]
+        },
+        "chunk_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "切片标识"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "version_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "版本标识"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "title": {
+          "type": "string",
+          "description": "来源标题"
+        },
+        "text": {
+          "type": "string",
+          "description": "冻结证据快照正文"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "来源 URL",
+              "format": "uri"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Location"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metadata": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LegalMetadata"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quality_flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/QualityFlag"
+          }
+        }
+      },
+      "required": [
+        "evidence_id",
+        "source_id",
+        "source_type",
+        "chunk_id",
+        "version_id",
+        "title",
+        "text",
+        "url",
+        "location",
+        "metadata",
+        "quality_flags"
+      ],
+      "additionalProperties": false
+    },
+    "Facts": {
+      "type": "object",
+      "properties": {
+        "scenario": {
+          "type": "string",
+          "enum": [
+            "wage_arrears",
+            "termination",
+            "economic_compensation",
+            "other"
+          ]
+        },
+        "location": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 80
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "relevant_date": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "known_facts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "用户明确提供或确认的事实；模型猜测不得写入"
+          }
+        },
+        "missing_fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "当前判断必要但尚未确认的事实字段"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "scenario",
+        "location",
+        "relevant_date",
+        "known_facts",
+        "missing_fields"
+      ],
+      "additionalProperties": false
+    },
+    "PathStatus": {
+      "type": "object",
+      "properties": {
+        "ordinary": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "succeeded",
+            "empty",
+            "skipped",
+            "timeout",
+            "failed",
+            "unavailable"
+          ]
+        },
+        "hyde": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "succeeded",
+            "empty",
+            "skipped",
+            "timeout",
+            "failed",
+            "unavailable"
+          ]
+        },
+        "graph": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "succeeded",
+            "empty",
+            "skipped",
+            "timeout",
+            "failed",
+            "unavailable"
+          ]
+        },
+        "web": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "succeeded",
+            "empty",
+            "skipped",
+            "timeout",
+            "failed",
+            "unavailable"
+          ]
+        },
+        "rerank": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "succeeded",
+            "empty",
+            "skipped",
+            "timeout",
+            "failed",
+            "unavailable"
+          ]
+        }
+      },
+      "required": [
+        "ordinary",
+        "hyde",
+        "graph",
+        "web",
+        "rerank"
+      ],
+      "additionalProperties": false
+    },
+    "DocumentListItem": {
+      "type": "object",
+      "properties": {
+        "document": {
+          "$ref": "#/$defs/Document"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Version"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "availability": {
+          "type": "string",
+          "enum": [
+            "available",
+            "limited",
+            "unavailable"
+          ]
+        },
+        "latest_task": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TaskStatus"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "document",
+        "version",
+        "availability",
+        "latest_task"
+      ],
+      "additionalProperties": false,
+      "description": "当前版本视图：version 对应 current_version_id；不存在时为 null 且 availability=unavailable。latest_task 为该资料最新导入任务，不覆盖当前版本状态。"
+    },
+    "Message": {
+      "type": "object",
+      "properties": {
+        "message_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "query_id": {
+          "type": "string",
+          "description": "业务 UUID",
+          "format": "uuid"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "user",
+            "assistant"
+          ]
+        },
+        "content": {
+          "type": "string",
+          "description": "内容"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "description": "UTC ISO 8601 时间",
+          "format": "date-time"
+        },
+        "facts": {
+          "$ref": "#/$defs/Facts"
+        }
+      },
+      "required": [
+        "message_id",
+        "query_id",
+        "role",
+        "content",
+        "status",
+        "created_at",
+        "facts"
+      ],
+      "additionalProperties": false
+    },
+    "GraphEntity": {
+      "type": "object",
+      "properties": {
+        "entity_id": {
+          "type": "string",
+          "description": "规范实体标识"
+        },
+        "label": {
+          "type": "string",
+          "description": "展示名称"
+        },
+        "entity_type": {
+          "type": "string",
+          "enum": [
+            "LegalDocument",
+            "DocumentVersion",
+            "Provision",
+            "Case",
+            "Issue",
+            "Organization"
+          ]
+        },
+        "version_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "当前可见知识版本"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "entity_id",
+        "label",
+        "entity_type",
+        "version_ids"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

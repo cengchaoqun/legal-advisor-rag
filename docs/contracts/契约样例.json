@@ -1,0 +1,488 @@
+[
+  {
+    "schema": "QualityFlag",
+    "value": "metadata_missing"
+  },
+  {
+    "schema": "LegalMetadata",
+    "value": {
+      "jurisdiction": "CN-national",
+      "issued_date": null,
+      "effective_from": null,
+      "effective_to": null,
+      "effectivity": "unknown",
+      "effectivity_source_chunk_id": null,
+      "case_number": null,
+      "issuer": null,
+      "document_number": null
+    }
+  },
+  {
+    "schema": "Location",
+    "value": {
+      "page": null,
+      "heading": "格式示例",
+      "article": null,
+      "start_char": 0,
+      "end_char": 23
+    }
+  },
+  {
+    "schema": "Document",
+    "value": {
+      "document_id": "22bbde1d-c9f5-4fad-9eb0-b783d0aa59c9",
+      "title": "仅用于契约检查的演示资料",
+      "doc_type": "guidance",
+      "scope": "knowledge",
+      "session_id": null,
+      "current_version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "tombstoned": false,
+      "created_at": "2026-10-21T08:00:00Z",
+      "updated_at": "2026-10-21T08:00:00Z"
+    }
+  },
+  {
+    "schema": "Version",
+    "value": {
+      "version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "document_id": "22bbde1d-c9f5-4fad-9eb0-b783d0aa59c9",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "source_url": null,
+      "object_key": "contract-only/original.md",
+      "metadata": {
+        "jurisdiction": "CN-national",
+        "issued_date": null,
+        "effective_from": null,
+        "effective_to": null,
+        "effectivity": "unknown",
+        "effectivity_source_chunk_id": null,
+        "case_number": null,
+        "issuer": null,
+        "document_number": null
+      },
+      "publication_state": "published",
+      "availability": "limited",
+      "vector_state": "ready",
+      "graph_state": "failed",
+      "quality_flags": [
+        "metadata_missing",
+        "graph_unavailable"
+      ],
+      "created_at": "2026-10-21T08:00:00Z",
+      "pipeline_revision": "contract-demo-parser1-split1-embed1",
+      "published_at": "2026-10-21T08:00:00Z"
+    }
+  },
+  {
+    "schema": "Chunk",
+    "value": {
+      "chunk_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "document_id": "22bbde1d-c9f5-4fad-9eb0-b783d0aa59c9",
+      "version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "ordinal": 0,
+      "content": "契约格式示例，不是法律资料，不纳入训练或评估。",
+      "location": {
+        "page": null,
+        "heading": "格式示例",
+        "article": null,
+        "start_char": 0,
+        "end_char": 23
+      },
+      "scenario_tags": [
+        "wage_arrears"
+      ],
+      "embedding_revision": "contract-only",
+      "quality_flags": [
+        "metadata_missing"
+      ]
+    }
+  },
+  {
+    "schema": "Candidate",
+    "value": {
+      "source_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "source_type": "local",
+      "chunk_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "title": "仅用于契约检查的演示资料",
+      "text": "契约格式示例，不是法律资料，不纳入训练或评估。",
+      "url": null,
+      "location": {
+        "page": null,
+        "heading": "格式示例",
+        "article": null,
+        "start_char": 0,
+        "end_char": 23
+      },
+      "recall_sources": [
+        "ordinary",
+        "graph"
+      ],
+      "rank_score": 0.02,
+      "rerank_score": null,
+      "quality_flags": []
+    }
+  },
+  {
+    "schema": "Evidence",
+    "value": {
+      "evidence_id": "E1",
+      "query_id": "80479947-69b1-40c3-93fd-9fc1404dcf88",
+      "source_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "source_type": "local",
+      "chunk_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "title": "仅用于契约检查的演示资料",
+      "text": "契约格式示例，不是法律资料，不纳入训练或评估。",
+      "url": null,
+      "location": {
+        "page": null,
+        "heading": "格式示例",
+        "article": null,
+        "start_char": 0,
+        "end_char": 23
+      },
+      "metadata": {
+        "jurisdiction": "CN-national",
+        "issued_date": null,
+        "effective_from": null,
+        "effective_to": null,
+        "effectivity": "unknown",
+        "effectivity_source_chunk_id": null,
+        "case_number": null,
+        "issuer": null,
+        "document_number": null
+      },
+      "quality_flags": [
+        "effectivity_unknown"
+      ]
+    }
+  },
+  {
+    "schema": "Path",
+    "value": {
+      "path_id": "contract-only",
+      "node_ids": [
+        "case-demo",
+        "provision-demo"
+      ],
+      "relation_types": [
+        "CITES"
+      ],
+      "support_chunk_ids": [
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "status": "source_supported",
+      "version_ids": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    }
+  },
+  {
+    "schema": "QueryRequest",
+    "value": {
+      "request_id": "80856f45-a1ac-4b3f-b3cd-3d87e7c68165",
+      "question": "请说明当前资料还有哪些适用条件无法确认？",
+      "web_enabled": false
+    }
+  },
+  {
+    "schema": "QueryStatus",
+    "value": {
+      "query_id": "80479947-69b1-40c3-93fd-9fc1404dcf88",
+      "session_id": "c553d043-a404-4b40-8067-a14682a54ad5",
+      "status": "completed",
+      "behavior": "clarify",
+      "answer": "请补充相关日期。",
+      "citation_validation": "not_applicable",
+      "warnings": [],
+      "evidence": [],
+      "last_event_seq": 4,
+      "created_at": "2026-10-21T08:00:00Z",
+      "finished_at": "2026-10-21T08:00:10Z",
+      "generation_model_id": null,
+      "generation_artifact_sha256": null,
+      "reasoning_code": "FACTS_MISSING",
+      "facts": {
+        "scenario": "wage_arrears",
+        "location": null,
+        "relevant_date": null,
+        "known_facts": [],
+        "missing_fields": [
+          "relevant_date"
+        ]
+      },
+      "path_status": {
+        "ordinary": "skipped",
+        "hyde": "skipped",
+        "graph": "skipped",
+        "web": "skipped",
+        "rerank": "skipped"
+      }
+    }
+  },
+  {
+    "schema": "TaskStatus",
+    "value": {
+      "task_id": "80856f45-a1ac-4b3f-b3cd-3d87e7c68165",
+      "document_id": "22bbde1d-c9f5-4fad-9eb0-b783d0aa59c9",
+      "version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "succeeded_with_warnings",
+      "stage": "done",
+      "availability": "limited",
+      "vector_state": "ready",
+      "graph_state": "failed",
+      "warnings": [
+        "graph_unavailable"
+      ],
+      "retryable": true,
+      "attempt": 1,
+      "error": null,
+      "updated_at": "2026-10-21T08:00:00Z"
+    }
+  },
+  {
+    "schema": "Error",
+    "value": {
+      "code": "DEPENDENCY_UNAVAILABLE",
+      "message": "契约演示：依赖不可用",
+      "request_id": "80856f45-a1ac-4b3f-b3cd-3d87e7c68165",
+      "retryable": true,
+      "details": {}
+    }
+  },
+  {
+    "schema": "DatasetSample",
+    "value": {
+      "sample_id": "contract_demo_only",
+      "split": "test",
+      "origin_group_id": "demo_group",
+      "scenario": "wage_arrears",
+      "ability": "abstention",
+      "question": "示例问题",
+      "evidence": [
+        {
+          "evidence_id": "E1",
+          "source_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "source_type": "local",
+          "chunk_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "title": "仅用于契约检查的演示资料",
+          "text": "契约格式示例，不是法律资料，不纳入训练或评估。",
+          "url": null,
+          "location": {
+            "page": null,
+            "heading": "格式示例",
+            "article": null,
+            "start_char": 0,
+            "end_char": 23
+          },
+          "metadata": {
+            "jurisdiction": "CN-national",
+            "issued_date": null,
+            "effective_from": null,
+            "effective_to": null,
+            "effectivity": "unknown",
+            "effectivity_source_chunk_id": null,
+            "case_number": null,
+            "issuer": null,
+            "document_number": null
+          },
+          "quality_flags": [
+            "effectivity_unknown"
+          ]
+        }
+      ],
+      "expected_behavior": "clarify",
+      "target_answer": "示例澄清，不作实际法律结论。[E1]",
+      "label_type": "synthetic_silver",
+      "generator_revision": "contract_example",
+      "source_manifest_revision": "contract_example"
+    }
+  },
+  {
+    "schema": "Session",
+    "value": {
+      "session_id": "c553d043-a404-4b40-8067-a14682a54ad5",
+      "title": "契约演示",
+      "created_at": "2026-10-21T08:00:00Z",
+      "updated_at": "2026-10-21T08:00:00Z",
+      "deleted": false
+    }
+  },
+  {
+    "schema": "Cost",
+    "value": {
+      "total_limit_yuan": 300,
+      "settled_yuan": 0,
+      "reserved_yuan": 0,
+      "estimated_unsettled_yuan": 0,
+      "pricing_revision": "not_configured",
+      "last_reconciled_at": null
+    }
+  },
+  {
+    "schema": "EvaluationLabel",
+    "value": {
+      "sample_id": "contract_demo_only",
+      "relevant_source_ids": [
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ],
+      "required_points": [
+        "示例点，不作为真实标签"
+      ],
+      "expected_behavior": "clarify",
+      "label_type": "synthetic_silver"
+    }
+  },
+  {
+    "schema": "SampleEvidence",
+    "value": {
+      "evidence_id": "E1",
+      "source_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "source_type": "local",
+      "chunk_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "title": "仅用于契约检查的演示资料",
+      "text": "契约格式示例，不是法律资料，不纳入训练或评估。",
+      "url": null,
+      "location": {
+        "page": null,
+        "heading": "格式示例",
+        "article": null,
+        "start_char": 0,
+        "end_char": 23
+      },
+      "metadata": {
+        "jurisdiction": "CN-national",
+        "issued_date": null,
+        "effective_from": null,
+        "effective_to": null,
+        "effectivity": "unknown",
+        "effectivity_source_chunk_id": null,
+        "case_number": null,
+        "issuer": null,
+        "document_number": null
+      },
+      "quality_flags": [
+        "effectivity_unknown"
+      ]
+    }
+  },
+  {
+    "schema": "Facts",
+    "value": {
+      "scenario": "wage_arrears",
+      "location": null,
+      "relevant_date": null,
+      "known_facts": [],
+      "missing_fields": [
+        "relevant_date"
+      ]
+    }
+  },
+  {
+    "schema": "PathStatus",
+    "value": {
+      "ordinary": "skipped",
+      "hyde": "skipped",
+      "graph": "skipped",
+      "web": "skipped",
+      "rerank": "skipped"
+    }
+  },
+  {
+    "schema": "DocumentListItem",
+    "value": {
+      "document": {
+        "document_id": "22bbde1d-c9f5-4fad-9eb0-b783d0aa59c9",
+        "title": "仅用于契约检查的演示资料",
+        "doc_type": "guidance",
+        "scope": "knowledge",
+        "session_id": null,
+        "current_version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "tombstoned": false,
+        "created_at": "2026-10-21T08:00:00Z",
+        "updated_at": "2026-10-21T08:00:00Z"
+      },
+      "version": {
+        "version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "document_id": "22bbde1d-c9f5-4fad-9eb0-b783d0aa59c9",
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "source_url": null,
+        "object_key": "contract-only/original.md",
+        "metadata": {
+          "jurisdiction": "CN-national",
+          "issued_date": null,
+          "effective_from": null,
+          "effective_to": null,
+          "effectivity": "unknown",
+          "effectivity_source_chunk_id": null,
+          "case_number": null,
+          "issuer": null,
+          "document_number": null
+        },
+        "publication_state": "published",
+        "availability": "limited",
+        "vector_state": "ready",
+        "graph_state": "failed",
+        "quality_flags": [
+          "metadata_missing",
+          "graph_unavailable"
+        ],
+        "created_at": "2026-10-21T08:00:00Z",
+        "pipeline_revision": "contract-demo-parser1-split1-embed1",
+        "published_at": "2026-10-21T08:00:00Z"
+      },
+      "availability": "limited",
+      "latest_task": {
+        "task_id": "80856f45-a1ac-4b3f-b3cd-3d87e7c68165",
+        "document_id": "22bbde1d-c9f5-4fad-9eb0-b783d0aa59c9",
+        "version_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "succeeded_with_warnings",
+        "stage": "done",
+        "availability": "limited",
+        "vector_state": "ready",
+        "graph_state": "failed",
+        "warnings": [
+          "graph_unavailable"
+        ],
+        "retryable": true,
+        "attempt": 1,
+        "error": null,
+        "updated_at": "2026-10-21T08:00:00Z"
+      }
+    }
+  },
+  {
+    "schema": "Message",
+    "value": {
+      "message_id": "80856f45-a1ac-4b3f-b3cd-3d87e7c68165",
+      "query_id": "80479947-69b1-40c3-93fd-9fc1404dcf88",
+      "role": "assistant",
+      "content": "请补充相关日期。",
+      "status": "complete",
+      "created_at": "2026-10-21T08:00:00Z",
+      "facts": {
+        "scenario": "wage_arrears",
+        "location": null,
+        "relevant_date": null,
+        "known_facts": [],
+        "missing_fields": [
+          "relevant_date"
+        ]
+      }
+    }
+  },
+  {
+    "schema": "GraphEntity",
+    "value": {
+      "entity_id": "case-demo",
+      "label": "契约演示案例",
+      "entity_type": "Case",
+      "version_ids": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    }
+  }
+]

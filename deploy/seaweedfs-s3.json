@@ -1,0 +1,20 @@
+{
+  "identities": [
+    {
+      "name": "legalrag",
+      "credentials": [
+        {
+          "accessKey": "legalrag",
+          "secretKey": "legalrag-secret"
+        }
+      ],
+      "actions": [
+        "Admin",
+        "Read",
+        "Write",
+        "List",
+        "Tagging"
+      ]
+    }
+  ]
+}
