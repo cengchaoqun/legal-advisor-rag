@@ -1,0 +1,24 @@
+{
+  "checked_on": "2026-10-24",
+  "scope": "核心源码副本的离线单元测试与契约检查；不包含 GPU 推理和法律语义评审",
+  "checks": [
+    {
+      "command": "python -m pytest tests/unit tests/contracts --basetemp=<临时目录> --override-ini addopts= -q --tb=short",
+      "exit_code": 0,
+      "stdout": ".................................................                        [100%]\n============================== warnings summary ===============================\n..\\..\\.venv\\Lib\\site-packages\\pymilvus\\client\\__init__.py:6\n  C:\\Users\\cengc\\Desktop\\项目实战\\RAG\\.venv\\Lib\\site-packages\\pymilvus\\client\\__init__.py:6: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.\n    from pkg_resources import DistributionNotFound, get_distribution\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n49 passed, 1 warning in 4.60s\n",
+      "stderr": ""
+    },
+    {
+      "command": "python docs/check_design.py",
+      "exit_code": 0,
+      "stdout": "{\"json_files\": 4, \"core_definitions\": 23, \"api_operations\": 23, \"validated_examples\": 23, \"covered_definitions\": 23, \"rejected_regressions\": 4, \"local_links\": 41, \"pen_screens\": 5, \"result\": \"passed\"}\n",
+      "stderr": ""
+    },
+    {
+      "command": "python docs/check_design_standard.py",
+      "exit_code": 0,
+      "stdout": "{\"json_schema\": \"draft2020-12\", \"format_checker\": true, \"validated_examples\": 23, \"openapi\": \"3.1.0\", \"api_operations\": 23, \"result\": \"passed\"}\n",
+      "stderr": ""
+    }
+  ]
+}
